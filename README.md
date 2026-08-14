@@ -21,6 +21,25 @@
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/0.png" width="600"/><br/>
+  <sub><b>Popup</b> — Fill All Forms, Fill This Form, Clear Form</sub>
+</p>
+
+<p align="center">
+  <img src="screenshots/1.png" width="600"/><br/>
+  <sub><b>Custom Fields</b> — default presets, ready out of the box</sub>
+</p>
+
+<p align="center">
+  <img src="screenshots/2.png" width="600"/><br/>
+  <sub><b>Snippets</b> — rich-text shortcut editor</sub>
+</p>
+
+---
+
 ## ✨ Features
 
 - 🖱️ **Fill All Forms** — one click fills every field on the page (or just the current form, or a single right-clicked field), across all frames/iframes.
