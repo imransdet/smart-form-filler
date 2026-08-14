@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Form Filler — Test Page</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; color: #1f2937; }
+    fieldset { margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; }
+    legend { font-weight: 600; padding: 0 6px; }
+    label { display: block; margin: 10px 0 4px; font-size: 13px; }
+    input, select, textarea { width: 100%; padding: 6px 8px; box-sizing: border-box; font-size: 13px; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .inline-label { display: flex; align-items: center; gap: 6px; }
+    iframe { width: 100%; height: 160px; border: 1px dashed #9ca3af; }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>Smart Form Filler — Manual Test Page</h2>
+  <p>Covers every locator type. Load the extension unpacked, then use the popup's <b>Fill This Tab</b> button, or set up matching Custom Field rules first and re-fill.</p>
+
+  <fieldset>
+    <legend>Label locator</legend>
+    <label for="fname">First name (label for=)</label>
+    <input id="fname" name="firstName" type="text" />
+    <label>Last name (wrapping label) <input name="lastName" type="text" /></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Placeholder / attribute / text / test-id locators</legend>
+    <input name="companyAria" type="text" aria-label="Company (aria-label)" />
+    <label>&nbsp;</label>
+    <input name="q" type="text" placeholder="Search products (placeholder only)" />
+    <input data-testid="email-field" type="email" placeholder="" />
+    <div>Phone Number: <input name="phone2" type="tel" /></div>
+    <input id="cf_zip" name="zipcode" class="postal" type="text" />
+  </fieldset>
+
+  <fieldset>
+    <legend>Role locator</legend>
+    <input id="bioRole" type="text" role="textbox" aria-label="Bio" />
+    <input id="roleSearch" type="text" role="searchbox" aria-label="Quick search" />
+  </fieldset>
+
+  <fieldset>
+    <legend>XPath / CSS target practice</legend>
+    <input id="css-target" class="special-field" type="text" />
+    <input name="xpath-target" type="text" />
+  </fieldset>
+
+  <fieldset>
+    <legend>Standard field types (default fallback)</legend>
+    <div class="row">
+      <div><label for="dob">Date of birth</label><input id="dob" type="date" /></div>
+      <div><label for="age">Age</label><input id="age" type="number" min="18" max="99" /></div>
+    </div>
+    <label for="website">Website</label>
+    <input id="website" type="url" />
+    <label for="favColor">Favourite colour</label>
+    <input id="favColor" type="color" />
+    <label for="volume">Volume</label>
+    <input id="volume" type="range" min="0" max="10" />
+    <label for="bio">Bio</label>
+    <textarea id="bio"></textarea>
+    <label for="country">Country</label>
+    <select id="country">
+      <option value="">Select…</option>
+      <option value="AU">Australia</option>
+      <option value="NZ">New Zealand</option>
+      <option value="UK">United Kingdom</option>
+    </select>
+    <div class="inline-label"><input type="checkbox" id="newsletter" /> <label for="newsletter" style="margin:0;">Subscribe to newsletter</label></div>
+    <label>Preferred contact</label>
+    <div class="inline-label"><input type="radio" name="contact" value="email" id="contactEmail" /> <label for="contactEmail" style="margin:0;">Email</label></div>
+    <div class="inline-label"><input type="radio" name="contact" value="phone" id="contactPhone" /> <label for="contactPhone" style="margin:0;">Phone</label></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Confirmation pairing &amp; agree-to-terms</legend>
+    <label for="pwd">Password</label>
+    <input id="pwd" name="password" type="password" />
+    <label for="pwd2">Confirm password</label>
+    <input id="pwd2" name="confirmPassword" type="password" />
+    <div class="inline-label"><input type="checkbox" name="agreeTerms" id="agreeTerms" /> <label for="agreeTerms" style="margin:0;">I agree to the Terms of Service</label></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Contenteditable</legend>
+    <div contenteditable="true" style="min-height:40px; border:1px solid #e5e7eb; padding:6px; border-radius:6px;"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Iframe (cross-frame fill)</legend>
+    <iframe src="iframe-form.html"></iframe>
+    <p class="hint" style="font-size:12px;color:#6b7280;">If this doesn't fill, enable "Allow access to file URLs" for the extension in <code>chrome://extensions</code> when testing over <code>file://</code>.</p>
+  </fieldset>
+</body>
+</html>

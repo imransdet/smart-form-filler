@@ -1,0 +1,22 @@
+@import url("../shared/base.css");
+
+body {
+  width: 360px;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+  position: relative;
+}
+
+.brand button.icon-btn {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+.brand button.icon-btn:hover {
+  color: var(--primary);
+  background: rgba(13, 163, 75, 0.1);
+}

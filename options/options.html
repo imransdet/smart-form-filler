@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Form Filler — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="../icons/icon32.png" alt="" width="22" height="22" />
+        <span>Smart Form Filler — Settings</span>
+      </div>
+      <nav class="tabs" id="tabs">
+        <a href="#/custom-fields" data-route="/custom-fields">Custom Fields</a>
+        <a href="#/snippets" data-route="/snippets">Snippets</a>
+        <a href="#/options" data-route="/options">Options</a>
+        <a href="#/backup" data-route="/backup">Backup &amp; Restore</a>
+      </nav>
+    </header>
+    <main id="view"></main>
+    <div id="toast" class="toast" hidden></div>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
