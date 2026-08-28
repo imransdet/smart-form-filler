@@ -68,29 +68,22 @@
     return `${pick(["Aa", "Bb", "Cc"])}${randInt(10000, 99999)}${pick(symbols.split(""))}`;
   }
 
-  function createIdentity() {
-    const cache = {};
-    return {
-      get(key, factory) {
-        if (!(key in cache)) cache[key] = factory();
-        return cache[key];
-      },
-    };
-  }
-
-  function generateEmail(opts, identity) {
+  // "Use a previously generated username/name" is resolved by the caller (content.js),
+  // which searches the actual page DOM for the nearest matching field and passes its
+  // real value in as opts.resolvedUsername/resolvedFirstName/resolvedLastName — that's
+  // a genuine DOM-proximity match with no guesswork, unlike a cache keyed by a fuzzy
+  // notion of "section". No match found (e.g. no such field on the page) falls back to
+  // an independently generated one, same as "Use a random name".
+  function generateEmail(opts) {
     const usernameSource = opts.usernameSource || "random";
     let uname;
     switch (usernameSource) {
       case "previousUsername":
-        uname = identity ? identity.get("username", username) : username();
+        uname = opts.resolvedUsername || username();
         break;
-      case "previousName": {
-        const f = identity ? identity.get("firstName", firstName) : firstName();
-        const l = identity ? identity.get("lastName", lastName) : lastName();
-        uname = `${f}.${l}`;
+      case "previousName":
+        uname = opts.resolvedFirstName && opts.resolvedLastName ? `${opts.resolvedFirstName}.${opts.resolvedLastName}` : username();
         break;
-      }
       case "list":
         uname = fromList(opts.usernameList) || username();
         break;
@@ -216,7 +209,7 @@
     return pick(arr);
   }
 
-  function generate(dataType, options, kind, identity) {
+  function generate(dataType, options, kind) {
     const opts = options || {};
     switch (dataType) {
       case "static":
@@ -230,19 +223,22 @@
       case "date":
         return dateValue(kind || "date", opts.minDays, opts.maxDays);
       case "email":
-        return generateEmail(opts, identity);
+        return generateEmail(opts);
+      // Always independently generated — a page with several "First Name" fields
+      // (different people: applicant/referee, primary/co-applicant, ...) needs
+      // distinct values, not one shared value repeated everywhere. The email type's
+      // "use a previously generated name" option gets its match via DOM proximity in
+      // content.js instead (see generateEmail above), not via caching here.
       case "firstName":
-        return identity ? identity.get("firstName", firstName) : firstName();
+        return firstName();
       case "middleName":
-        return identity ? identity.get("middleName", firstName) : firstName();
+        return firstName();
       case "lastName":
-        return identity ? identity.get("lastName", lastName) : lastName();
+        return lastName();
       case "fullName":
-        return identity
-          ? `${identity.get("firstName", firstName)} ${identity.get("lastName", lastName)}`
-          : fullName();
+        return fullName();
       case "username":
-        return identity ? identity.get("username", username) : username();
+        return username();
       case "password":
         return opts.fixed ? opts.fixedValue || "" : password();
       case "telephone":
@@ -273,5 +269,5 @@
   }
 
   global.FF = global.FF || {};
-  global.FF.dataGenerator = { generate, pick, randInt, createIdentity };
+  global.FF.dataGenerator = { generate, pick, randInt };
 })(typeof window !== "undefined" ? window : self);

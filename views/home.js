@@ -18,11 +18,11 @@ export async function renderHome(container) {
 
   container.innerHTML = `
     <div class="fill-hero">
-      <button class="btn btn-primary btn-block" id="fillAll" ${disabled ? "disabled" : ""}>Fill All Forms</button>
-      <div class="btn-row" style="margin-top:8px;">
-        <button class="btn" id="fillForm" ${disabled ? "disabled" : ""}>Fill This Form</button>
-        <button class="btn" id="clearForm" ${disabled ? "disabled" : ""}>Clear Form</button>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="fillAll" style="flex:1;" ${disabled ? "disabled" : ""}>Fill All Forms</button>
+        <button class="btn" id="fillForm" style="flex:1;" ${disabled ? "disabled" : ""}>Fill This Form</button>
       </div>
+      <button class="btn" id="clearForm" style="margin-top:8px;" ${disabled ? "disabled" : ""}>Clear Form</button>
       <div class="count" id="resultCount"></div>
     </div>
     <h2 class="section-title">Status</h2>

@@ -166,6 +166,72 @@
     if (settings.enableFillAnimation !== false) window.FF.feedback.flashElement(el);
   }
 
+  // Small built-in word lists (25 first names, 20 last names, ...) mean a page with
+  // several similar fields has a real chance of independently rolling the same value
+  // twice — e.g. 4 "First Name" fields have roughly a 1-in-4 chance of a random
+  // collision. "static" (and a fixed password) are the only cases where repeating on
+  // purpose is correct; everything else gets a few retries against what's already
+  // been used elsewhere in this same fill pass before falling back to the last roll.
+  // "Middle Name" draws from the exact same word list as "First Name" (see
+  // data-generator.js) — dedup them as one pool, or a First Name + Middle Name pair
+  // for the same person could still both land on e.g. "Grace" while every *other*
+  // field type stays correctly unique.
+  const DEDUP_POOL_KEY = { middleName: "firstName" };
+
+  function generateUnique(dataType, dataOptions, kind, usedValues) {
+    if (dataType === "static" || (dataType === "password" && dataOptions && dataOptions.fixed)) {
+      return dataGenerator.generate(dataType, dataOptions, kind);
+    }
+    const poolKey = DEDUP_POOL_KEY[dataType] || dataType;
+    const seen = usedValues.get(poolKey) || new Set();
+    if (!usedValues.has(poolKey)) usedValues.set(poolKey, seen);
+    let value;
+    for (let attempt = 0; attempt < 15; attempt++) {
+      value = dataGenerator.generate(dataType, dataOptions, kind);
+      if (!value || !seen.has(value.toLowerCase())) break;
+    }
+    if (value) seen.add(value.toLowerCase());
+    return value;
+  }
+
+  // DOM tree-distance between two elements (edge count via their lowest common
+  // ancestor) — used to find "the nearest actual name field on the page" for an
+  // email's "use the generated name" option. No magic thresholds: it always finds
+  // whichever recorded name field is genuinely closest to this specific email field,
+  // so it works the same whether a repeated section has 3 fields or 30.
+  function ancestorChain(el) {
+    const chain = [];
+    let node = el;
+    while (node) {
+      chain.push(node);
+      node = node.parentElement;
+    }
+    return chain;
+  }
+
+  function domDistance(a, b) {
+    const chainA = ancestorChain(a);
+    const indexInB = new Map(ancestorChain(b).map((node, i) => [node, i]));
+    for (let i = 0; i < chainA.length; i++) {
+      if (indexInB.has(chainA[i])) return i + indexInB.get(chainA[i]);
+    }
+    return Infinity;
+  }
+
+  function nearestRecordValue(el, dataType, nameRecords) {
+    let best = null;
+    let bestDist = Infinity;
+    for (const rec of nameRecords) {
+      if (rec.dataType !== dataType) continue;
+      const dist = domDistance(el, rec.el);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = rec;
+      }
+    }
+    return best ? best.value : null;
+  }
+
   function fillRadioGroup(radios, settings, matchedElement) {
     const target = matchedElement || dataGenerator.pick(radios);
     radios.forEach((r) => {
@@ -175,12 +241,36 @@
     maybeFlash(target, settings);
   }
 
-  async function applyValue(el, dataType, dataOptions, settings, identity) {
+  // An email field set to "use a previously generated name/username" gets the actual
+  // resolved value injected here (see nearestRecordValue above) instead of inventing
+  // its own independent one.
+  function resolveDataOptions(el, dataType, dataOptions, nameRecords) {
+    if (dataType !== "email" || !dataOptions) return dataOptions;
+    if (dataOptions.usernameSource === "previousName") {
+      const resolvedFirstName = nearestRecordValue(el, "firstName", nameRecords);
+      const resolvedLastName = nearestRecordValue(el, "lastName", nameRecords);
+      if (resolvedFirstName && resolvedLastName) return { ...dataOptions, resolvedFirstName, resolvedLastName };
+    } else if (dataOptions.usernameSource === "previousUsername") {
+      const resolvedUsername = nearestRecordValue(el, "username", nameRecords);
+      if (resolvedUsername) return { ...dataOptions, resolvedUsername };
+    }
+    return dataOptions;
+  }
+
+  function recordNameValue(el, dataType, value, nameRecords) {
+    if (value && (dataType === "firstName" || dataType === "lastName" || dataType === "username")) {
+      nameRecords.push({ el, dataType, value });
+    }
+  }
+
+  async function applyValue(el, dataType, dataOptions, settings, usedValues, nameRecords) {
     const tag = el.tagName;
+    const effectiveOptions = resolveDataOptions(el, dataType, dataOptions, nameRecords);
     const comboTrigger = tag !== "SELECT" && fieldScanner.comboboxTriggerFor(el);
     if (comboTrigger) {
       const kind = dateKindFor(el);
-      const desiredText = dataType ? dataGenerator.generate(dataType, dataOptions, kind, identity) : "";
+      const desiredText = dataType ? generateUnique(dataType, effectiveOptions, kind, usedValues) : "";
+      recordNameValue(el, dataType, desiredText, nameRecords);
       const handled = await fillComboboxOption(comboTrigger, desiredText);
       if (handled) {
         maybeFlash(comboTrigger, settings);
@@ -190,14 +280,17 @@
       // try filling it like a normal field instead of leaving it untouched.
     }
     if (tag === "SELECT") {
-      const value = dataType ? dataGenerator.generate(dataType, dataOptions, null, identity) : null;
+      const value = dataType ? generateUnique(dataType, effectiveOptions, null, usedValues) : null;
+      recordNameValue(el, dataType, value, nameRecords);
       setSelectValue(el, value);
       dispatchEvents(el, settings);
       maybeFlash(el, settings);
       return;
     }
     if (el.type === "checkbox") {
-      const raw = dataType ? dataGenerator.generate(dataType, dataOptions, null, identity) : undefined;
+      // Not deduped: this is only ever coerced to a true/false checked state below,
+      // so "reusing" a raw value across checkboxes has no meaning to avoid.
+      const raw = dataType ? dataGenerator.generate(dataType, effectiveOptions, null) : undefined;
       const forced = raw === undefined ? undefined : /^(true|1|yes|checked|on)$/i.test(String(raw));
       setCheckbox(el, forced);
       dispatchEvents(el, settings);
@@ -205,13 +298,16 @@
       return;
     }
     if (el.isContentEditable) {
-      el.textContent = dataGenerator.generate(dataType || "text", dataOptions, null, identity);
+      const value = generateUnique(dataType || "text", effectiveOptions, null, usedValues);
+      recordNameValue(el, dataType, value, nameRecords);
+      el.textContent = value;
       dispatchEvents(el, settings);
       maybeFlash(el, settings);
       return;
     }
     const kind = dateKindFor(el);
-    let value = dataGenerator.generate(dataType, dataOptions, kind, identity);
+    let value = generateUnique(dataType, effectiveOptions, kind, usedValues);
+    recordNameValue(el, dataType, value, nameRecords);
     if (el.maxLength && el.maxLength > 0 && value.length > el.maxLength) {
       value = value.slice(0, el.maxLength);
     }
@@ -330,7 +426,14 @@
     const claimed = new Set();
     let unclaimedPool = pool.slice();
     const radioMatched = new Map();
-    const identity = dataGenerator.createIdentity();
+
+    // Page-wide so two similar fields anywhere on the page (not just within one
+    // "section") can't collide with each other.
+    const usedValues = new Map();
+    // Every First/Last/Username value generated this pass, so an email field's "use
+    // the generated name" option can look up its nearest real match (see
+    // nearestRecordValue / resolveDataOptions above) instead of relying on a cache.
+    const nameRecords = [];
 
     const enabledRules = (customFields || []).filter((rule) => rule.enabled !== false);
     for (const rule of enabledRules) {
@@ -344,7 +447,7 @@
         if (el.type === "radio") {
           radioMatched.set(radioGroupKey(el), el);
         } else {
-          await applyValue(el, rule.dataType, rule.dataOptions, settings, identity);
+          await applyValue(el, rule.dataType, rule.dataOptions, settings, usedValues, nameRecords);
         }
       }
       unclaimedPool = unclaimedPool.filter((el) => !claimed.has(el));
@@ -353,7 +456,7 @@
     for (const el of unclaimedPool) {
       if (handleAgreeTerms(el, settings)) continue;
       const [dataType, dataOptions] = defaultDataTypeFor(el, settings);
-      await applyValue(el, dataType, dataOptions, settings, identity);
+      await applyValue(el, dataType, dataOptions, settings, usedValues, nameRecords);
     }
 
     radiosByGroup.forEach((radios, key) => {
