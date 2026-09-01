@@ -38,6 +38,7 @@
         "content/state-cache.js",
         "content/feedback.js",
         "content/text-expander.js",
+        "content/overlay-button.js",
         "content/content.js"
       ]
     }

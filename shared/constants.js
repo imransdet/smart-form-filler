@@ -80,6 +80,7 @@ export const DEFAULT_SETTINGS = {
   enableSnippets: true,
   enableFillAnimation: true,
   enableFillSound: true,
+  enableOverlayButton: true,
 };
 
 export const DEFAULT_CUSTOM_FIELDS = [];

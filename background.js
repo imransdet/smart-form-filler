@@ -79,14 +79,18 @@ chrome.commands.onCommand.addListener((command, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message && message.action === "broadcastFill" && message.tabId) {
-    broadcastToTab(message.tabId, { action: message.fillAction || "fillAll" }).then((filled) => {
+  // The popup knows its target tab explicitly; a content script (e.g. the on-page
+  // overlay button) has no chrome.tabs access to look its own tab up, but Chrome
+  // already attaches it as sender.tab for any message a content script sends.
+  const tabId = (message && message.tabId) || (sender && sender.tab && sender.tab.id);
+  if (message && message.action === "broadcastFill" && tabId) {
+    broadcastToTab(tabId, { action: message.fillAction || "fillAll" }).then((filled) => {
       sendResponse({ filled });
     });
     return true;
   }
-  if (message && message.action === "clearTab" && message.tabId) {
-    broadcastToTab(message.tabId, { action: "clear" }).then((filled) => {
+  if (message && message.action === "clearTab" && tabId) {
+    broadcastToTab(tabId, { action: "clear" }).then((filled) => {
       sendResponse({ filled });
     });
     return true;

@@ -57,6 +57,9 @@ export async function renderOptions(container) {
     ${toggleRow("s_fillAnimation", "Flash filled fields", "Briefly highlight each field right after it's filled, so you can see exactly what changed.", settings.enableFillAnimation !== false)}
     ${toggleRow("s_fillSound", "Play a success sound", "A short chime when a fill or snippet expansion completes.", settings.enableFillSound !== false)}
 
+    <h2 class="section-title">Floating button</h2>
+    ${toggleRow("s_overlayButton", "Show floating Fill All Forms button", "A small round button on every page — click to fill, or drag it anywhere on screen. Its position is remembered.", settings.enableOverlayButton !== false)}
+
     <h2 class="section-title">Other</h2>
     <div class="form-row"><label>Default max length</label><input type="number" id="s_maxLength" value="${settings.defaultMaxLength ?? 100}" /></div>
     ${toggleRow("s_contextMenu", "Enable right-click context menu", "Adds Fill all / Fill this form / Fill this field to the right-click menu.", settings.enableContextMenu !== false)}
@@ -88,6 +91,7 @@ export async function renderOptions(container) {
       enableSnippets: container.querySelector("#s_snippets").checked,
       enableFillAnimation: container.querySelector("#s_fillAnimation").checked,
       enableFillSound: container.querySelector("#s_fillSound").checked,
+      enableOverlayButton: container.querySelector("#s_overlayButton").checked,
     };
     Object.assign(settings, updated);
     await setSettings(updated);

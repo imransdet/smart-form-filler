@@ -20,6 +20,7 @@
         enableSnippets: true,
         enableFillAnimation: true,
         enableFillSound: true,
+        enableOverlayButton: true,
       },
       raw || {}
     );
