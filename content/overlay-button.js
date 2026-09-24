@@ -4,7 +4,7 @@
   const stateCache = window.FF.stateCache;
 
   const POSITION_KEY = "ff_overlay_position";
-  const SIZE = 52;
+  const SIZE = 40;
   const MARGIN = 16;
 
   let hostEl = null;
@@ -141,7 +141,7 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     `;
     buttonEl.innerHTML = `
-      <svg width="26" height="26" viewBox="0 0 128 128" style="pointer-events: none;">
+      <svg width="20" height="20" viewBox="0 0 128 128" style="pointer-events: none;">
         <path d="M100 26 H40 a18 18 0 0 0 0 36 h48 a18 18 0 0 1 0 36 H28" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round"></path>
         <circle cx="100" cy="26" r="10" fill="#00391b"></circle>
       </svg>
